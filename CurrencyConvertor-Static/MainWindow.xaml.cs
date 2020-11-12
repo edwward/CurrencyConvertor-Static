@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,37 +22,57 @@ namespace CurrencyConvertor_Static
     
     public partial class MainWindow : Window
     {
+        
+        SqlConnection con = new SqlConnection(); //Create an object for SqlConnection        
+        SqlCommand cmd = new SqlCommand();  //Create an object for SqlCommand
+        SqlDataAdapter da = new SqlDataAdapter();    //Create object for SqlDataAdapter
+
+        private int CurrencyId = 0;
+        private double FromAmount = 0;
+        private double ToAmount = 0;
+
         public MainWindow()
         {
             InitializeComponent();
-            lblCurrency.Content = "Hello Dear User";
             BindCurrency();
+            GetData();
+        }
+        public void MyConnection()      //establish connection to DB
+        {
+            //Database connection string
+            String Conn = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
+            con = new SqlConnection(Conn);
+            con.Open();         //Connection Open
         }
 
-        private void BindCurrency()         //fill combobox "from"
+        private void BindCurrency()         //fill combobox
         {
-            DataTable dataTableCurrency = new DataTable();
-            dataTableCurrency.Columns.Add("Text");
-            dataTableCurrency.Columns.Add("Value");
+            MyConnection();
+            DataTable dt = new DataTable();  //Create an object for DataTable
+            cmd = new SqlCommand("select Id, CurrencyName from Currency_Master", con);  //Write query for get data from Currency_Master table
+            cmd.CommandType = CommandType.Text;     //CommandType define which type of command we use for write a query
+            da = new SqlDataAdapter(cmd);           //It accepts a parameter that contains the command text of the object's selectCommand property.
+            da.Fill(dt);
 
-            dataTableCurrency.Rows.Add("--SELECT--", 0);
-            dataTableCurrency.Rows.Add("INR", 1);
-            dataTableCurrency.Rows.Add("USD", 75);
-            dataTableCurrency.Rows.Add("EUR", 85);
-            dataTableCurrency.Rows.Add("SAR", 20);
-            dataTableCurrency.Rows.Add("POUND", 5);
-            dataTableCurrency.Rows.Add("DEM", 43);
+            DataRow newRow = dt.NewRow();               //Create an object for DataRow
+            newRow["Id"] = 0;                           //Assign a value to Id column
+            newRow["CurrencyName"] = "--SELECT--";      //Assign value to CurrencyName column
+            dt.Rows.InsertAt(newRow, 0);                //Insert a new row in dt with the data at a 0 position
+                                                        //The dt is not null and rows count greater than 0
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                cmbFromCurrency.ItemsSource = dt.DefaultView;       //Assign the datatable data to from currency combobox using ItemSource property.
+                cmbToCurrency.ItemsSource = dt.DefaultView;         //Assign the datatable data to to currency combobox using ItemSource property.
+            }
+            con.Close();
 
-            cmbFromCurrency.ItemsSource = dataTableCurrency.DefaultView;
-            cmbFromCurrency.DisplayMemberPath = "Text";     //text "INR" "USD" etc.
-            cmbFromCurrency.SelectedValuePath = "Value";    //value = numbers next to text
-            cmbFromCurrency.SelectedIndex = 0;          //first item to show in combobox - here "SELECT"
+            cmbFromCurrency.DisplayMemberPath = "CurrencyName";      //To display the underlying datasource for cmbFromCurrency
+            cmbFromCurrency.SelectedValuePath = "Id";                //To use as the actual value for the items
+            cmbFromCurrency.SelectedValue = 0;                      //Show default item in combobox
 
-            cmbToCurrency.ItemsSource = dataTableCurrency.DefaultView;
-            cmbToCurrency.DisplayMemberPath = "Text";
-            cmbToCurrency.SelectedValuePath = "Value";
-            cmbToCurrency.SelectedIndex = 0;
-
+            cmbToCurrency.DisplayMemberPath = "CurrencyName";
+            cmbToCurrency.SelectedValuePath = "Id";
+            cmbToCurrency.SelectedValue = 0;
         }
 
         private void Convert_Click(object sender, RoutedEventArgs e)
@@ -141,28 +163,181 @@ namespace CurrencyConvertor_Static
         {
             try
             {
-                //Clear amount textbox text
-                txtCurrency.Text = string.Empty;
+                txtCurrency.Text = string.Empty;        //Clear amount textbox text
 
-                //From currency combobox items count greater than 0
-                if (cmbFromCurrency.Items.Count > 0)
+                if (cmbFromCurrency.Items.Count > 0)        //From currency combobox items count greater than 0
                 {
-                    //Set from currency combobox selected item hint
-                    cmbFromCurrency.SelectedIndex = 0;
+                    cmbFromCurrency.SelectedIndex = 0;      //Set from currency combobox selected item hint
                 }
 
-                //To currency combobox items count greater than 0
-                if (cmbToCurrency.Items.Count > 0)
+                if (cmbToCurrency.Items.Count > 0)          //To currency combobox items count greater than 0
                 {
-                    //Set to currency combobox selected item hint
-                    cmbToCurrency.SelectedIndex = 0;
+                    cmbToCurrency.SelectedIndex = 0;        //Set to currency combobox selected item hint
                 }
 
-                //Clear a label text
-                lblCurrency.Content = "";
-
-                //Set focus on amount textbox
+                lblCurrency.Content = "";       //Clear a label text
                 txtCurrency.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //Check the validation
+                if (txtAmount.Text == null || txtAmount.Text.Trim() == "")  //is text box empty?
+                {
+                    MessageBox.Show("Please enter amount", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    txtAmount.Focus();
+                    return;
+                }
+                else if (txtCurrencyName.Text == null || txtCurrencyName.Text.Trim() == "")
+                {
+                    MessageBox.Show("Please enter currency name", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    txtCurrencyName.Focus();
+                    return;
+                }
+                else 
+                {
+                    if (CurrencyId != 0 && CurrencyId > 0)      //update button
+                    {
+                        if (MessageBox.Show("Are you sure you want to Update ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)      //show confirmation message
+                        {
+                            MyConnection();     //connection
+                            DataTable dt = new DataTable();
+                            cmd = new SqlCommand("UPDATE Currency_Master SET Amount = @Amount, CurrencyName = @CurrencyName WHERE Id = @Id", con);
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@Id", CurrencyId);
+                            cmd.Parameters.AddWithValue("@Amount", txtAmount.Text);
+                            cmd.Parameters.AddWithValue("@CurrencyName", txtCurrencyName.Text);
+                            cmd.ExecuteNonQuery();
+                            con.Close();
+
+                            MessageBox.Show("Data Updated successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    else 
+                    {
+                        if (MessageBox.Show("Are you sure you want to Save ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)        //create new row to table
+                        {
+                            MyConnection();
+                            DataTable dt = new DataTable();
+                            cmd = new SqlCommand("INSERT INTO Currency_Master(Amount, CurrencyName) VALUES(@Amount, @CurrencyName)", con);
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@Amount", txtAmount.Text);
+                            cmd.Parameters.AddWithValue("@CurrencyName", txtCurrencyName.Text);
+                            cmd.ExecuteNonQuery();
+                            con.Close();
+
+                            MessageBox.Show("Data saved successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    ClearMaster();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+        }
+        
+        private void ClearMaster()  //Method is used to clear all the input which the user has entered in currency master tab
+        {
+            try
+            {
+                txtAmount.Text = string.Empty;
+                txtCurrencyName.Text = string.Empty;
+                btnSave.Content = "Save";
+                GetData();
+                CurrencyId = 0;
+                BindCurrency();
+                txtAmount.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        public void GetData()                   //Bind Data in DataGrid View.
+        {
+            MyConnection();                     //The method is used for connect with database and open database connection 
+            DataTable dt = new DataTable();      //Create Datatable object
+            cmd = new SqlCommand("SELECT * FROM Currency_Master", con); //Write Sql Query for Get data from database table. Query written in double quotes and after comma provide connection
+            cmd.CommandType = CommandType.Text; //CommandType define Which type of command execute like Text, StoredProcedure, TableDirect.
+            da = new SqlDataAdapter(cmd);    //It is accept a parameter that contains the command text of the object's SelectCommand property.
+            da.Fill(dt);                    //The DataAdapter serves as a bridge between a DataSet and a data source for retrieving and saving data. The Fill operation then adds the rows to destination DataTable objects in the DataSet 
+
+            if (dt != null && dt.Rows.Count > 0)    //dt is not null and rows count greater than 0
+            {   
+                dgvCurrency.ItemsSource = dt.DefaultView;   //Assign DataTable data to dgvCurrency using ItemSource property.  
+            }
+            else
+            {
+                dgvCurrency.ItemsSource = null;
+            }
+            con.Close();
+        }
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ClearMaster();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        //DataGrid selected cell changed event
+        private void dgvCurrency_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
+        {
+            try
+            {
+                DataGrid grd = (DataGrid)sender;    //Create object for DataGrid from sender object
+                DataRowView row_selected = grd.CurrentItem as DataRowView;  //Create object for DataRowView
+
+                if (row_selected != null)
+                {
+                    if (dgvCurrency.Items.Count > 0)    //dgvCurrency items count greater than zero
+                    {
+                        if (grd.SelectedCells.Count > 0)
+                        {
+                            CurrencyId = Int32.Parse(row_selected["Id"].ToString()); //Get selected row Id column value and Set in CurrencyId variable
+                            
+                            if (grd.SelectedCells[0].Column.DisplayIndex == 0)  //DisplayIndex is equal to zero than it is Edit cell
+                            {
+                                txtAmount.Text = row_selected["Amount"].ToString();  //Get selected row Amount column value and Set in Amount textbox
+                                txtCurrencyName.Text = row_selected["CurrencyName"].ToString();  //Get selected row CurrencyName column value and Set in CurrencyName textbox
+                                btnSave.Content = "Update";  //Change save button text Save to Update
+                            }
+                                               
+                            if (grd.SelectedCells[0].Column.DisplayIndex == 1)  //DisplayIndex is equal to one than it is Delete cell 
+                            {
+                                if (MessageBox.Show("Are you sure you want to delete ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)  //Show confirmation dialogue box
+                                {
+                                    MyConnection();
+                                    DataTable dt = new DataTable();
+
+                                    cmd = new SqlCommand("DELETE FROM Currency_Master WHERE Id = @Id", con);   //Execute delete query for delete record from table using Id
+                                    cmd.CommandType = CommandType.Text;
+                                    cmd.Parameters.AddWithValue("@Id", CurrencyId);  //CurrencyId set in @Id parameter and send it in delete statement
+                                    cmd.ExecuteNonQuery();
+                                    con.Close();
+                                    MessageBox.Show("Data deleted successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                                    ClearMaster();
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
