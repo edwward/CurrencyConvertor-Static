@@ -23,10 +23,6 @@ namespace CurrencyConvertor_Static
     public partial class MainWindow : Window
     {
         
-        SqlConnection con = new SqlConnection(); //Create an object for SqlConnection        
-        SqlCommand cmd = new SqlCommand();  //Create an object for SqlCommand
-        SqlDataAdapter da = new SqlDataAdapter();    //Create object for SqlDataAdapter
-
         private int CurrencyId = 0;
         private double FromAmount = 0;
         private double ToAmount = 0;
@@ -35,6 +31,7 @@ namespace CurrencyConvertor_Static
         {
             InitializeComponent();
             BindCurrency();
+            GetData();
         }
         public void MyConnection()      //establish connection to DB
         {
@@ -44,7 +41,7 @@ namespace CurrencyConvertor_Static
             con.Open();         //Connection Open
         }
 
-        private void BindCurrency()         //fill combobox
+        private void BindCurrency()         //fill combobox "from"
         {
             MyConnection();
             DataTable dt = new DataTable();  //Create an object for DataTable
