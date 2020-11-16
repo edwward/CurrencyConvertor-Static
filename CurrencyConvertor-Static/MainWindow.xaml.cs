@@ -22,7 +22,15 @@ namespace CurrencyConvertor_Static
     
     public partial class MainWindow : Window
     {
-        
+        //Create object for SqlConnection
+        SqlConnection con = new SqlConnection();
+
+        //Create an object for SqlCommand
+        SqlCommand cmd = new SqlCommand();
+
+        //Create object for SqlDataAdapter
+        SqlDataAdapter da = new SqlDataAdapter();
+
         private int CurrencyId = 0;
         private double FromAmount = 0;
         private double ToAmount = 0;
@@ -32,15 +40,17 @@ namespace CurrencyConvertor_Static
             InitializeComponent();
             BindCurrency();
             GetData();
+            
         }
-        public void MyConnection()      //establish connection to DB
+        public void MyConnection()
         {
             //Database connection string
             String Conn = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
             con = new SqlConnection(Conn);
-            con.Open();         //Connection Open
-        }
 
+            //Open the connection
+            con.Open();
+        }
         private void BindCurrency()         //fill combobox "from"
         {
             MyConnection();
@@ -62,14 +72,19 @@ namespace CurrencyConvertor_Static
             }
             con.Close();
 
-            cmbFromCurrency.DisplayMemberPath = "CurrencyName";      //To display the underlying datasource for cmbFromCurrency
-            cmbFromCurrency.SelectedValuePath = "Id";                //To use as the actual value for the items
-            cmbFromCurrency.SelectedValue = 0;                      //Show default item in combobox
+            //To display the underlying datasource for cmbFromCurrency
+            cmbFromCurrency.DisplayMemberPath = "CurrencyName";
 
-            cmbToCurrency.ItemsSource = dataTableCurrency.DefaultView;
-            cmbToCurrency.DisplayMemberPath = "Text";
-            cmbToCurrency.SelectedValuePath = "Value";
-            cmbToCurrency.SelectedIndex = 0;
+
+            //To use as the actual value for the items
+            cmbFromCurrency.SelectedValuePath = "Id";
+
+            //Show default item in Combobox
+            cmbFromCurrency.SelectedValue = 0;
+
+            cmbToCurrency.DisplayMemberPath = "CurrencyName";
+            cmbToCurrency.SelectedValuePath = "Id";
+            cmbToCurrency.SelectedValue = 0;
 
         }
 
