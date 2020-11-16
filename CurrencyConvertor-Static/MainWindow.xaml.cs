@@ -35,7 +35,6 @@ namespace CurrencyConvertor_Static
         {
             InitializeComponent();
             BindCurrency();
-            GetData();
         }
         public void MyConnection()      //establish connection to DB
         {
@@ -70,9 +69,11 @@ namespace CurrencyConvertor_Static
             cmbFromCurrency.SelectedValuePath = "Id";                //To use as the actual value for the items
             cmbFromCurrency.SelectedValue = 0;                      //Show default item in combobox
 
-            cmbToCurrency.DisplayMemberPath = "CurrencyName";
-            cmbToCurrency.SelectedValuePath = "Id";
-            cmbToCurrency.SelectedValue = 0;
+            cmbToCurrency.ItemsSource = dataTableCurrency.DefaultView;
+            cmbToCurrency.DisplayMemberPath = "Text";
+            cmbToCurrency.SelectedValuePath = "Value";
+            cmbToCurrency.SelectedIndex = 0;
+
         }
 
         private void Convert_Click(object sender, RoutedEventArgs e)
