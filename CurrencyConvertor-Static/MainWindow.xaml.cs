@@ -20,11 +20,28 @@ namespace CurrencyConvertor_Static
     
     public partial class MainWindow : Window
     {
+        
+        SqlConnection con = new SqlConnection(); //Create an object for SqlConnection        
+        SqlCommand cmd = new SqlCommand();  //Create an object for SqlCommand
+        SqlDataAdapter da = new SqlDataAdapter();    //Create object for SqlDataAdapter
+
+        private int CurrencyId = 0;
+        private double FromAmount = 0;
+        private double ToAmount = 0;
+
         public MainWindow()
         {
             InitializeComponent();
             lblCurrency.Content = "Hello Dear User";
             BindCurrency();
+            GetData();
+        }
+        public void MyConnection()      //establish connection to DB
+        {
+            //Database connection string
+            String Conn = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
+            con = new SqlConnection(Conn);
+            con.Open();         //Connection Open
         }
 
         private void BindCurrency()         //fill combobox "from"
@@ -46,12 +63,11 @@ namespace CurrencyConvertor_Static
             cmbFromCurrency.SelectedValuePath = "Value";    //value = numbers next to text
             cmbFromCurrency.SelectedIndex = 0;          //first item to show in combobox - here "SELECT"
 
-            cmbToCurrency.ItemsSource = dataTableCurrency.DefaultView;
-            cmbToCurrency.DisplayMemberPath = "Text";
-            cmbToCurrency.SelectedValuePath = "Value";
-            cmbToCurrency.SelectedIndex = 0;
-
+            cmbToCurrency.DisplayMemberPath = "CurrencyName";
+            cmbToCurrency.SelectedValuePath = "Id";
+            cmbToCurrency.SelectedValue = 0;
         }
+        
 
         private void Convert_Click(object sender, RoutedEventArgs e)
         {
