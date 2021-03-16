@@ -67,28 +67,21 @@ namespace CurrencyConvertor_Static
             //Check amount textbox is Null or Blank
             if (txtCurrency.Text == null || txtCurrency.Text.Trim() == "")
             {
-                //If amount Textbox is Null or Blank show the below message box
                 MessageBox.Show("Please Enter Currency", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                //After click on OK button set focus on amount textbox
                 txtCurrency.Focus();
                 return;
             }
             //Else if currency From is not selected or select default text --SELECT--
             else if (cmbFromCurrency.SelectedValue == null || cmbFromCurrency.SelectedIndex == 0)
             {
-                //Show the message
-                MessageBox.Show("Please Select Currency From", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                //Set focus to From Combobox
+                MessageBox.Show("Please Select Currency From", "Information", MessageBoxButton.OK, MessageBoxImage.Information)
                 cmbFromCurrency.Focus();
                 return;
             }
             // Else if currency To is not selected or select default text --SELECT--
             else if (cmbToCurrency.SelectedValue == null || cmbToCurrency.SelectedIndex == 0)
             {
-                //Show the message
                 MessageBox.Show("Please Select Currency To", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                //Set focus to To Combobox
                 cmbToCurrency.Focus();
                 return;
             }
@@ -96,19 +89,12 @@ namespace CurrencyConvertor_Static
             //If From and To Combobox selects same value
             if (cmbFromCurrency.Text == cmbToCurrency.Text)
             {
-                //Amount textbox value set in ConvertedValue. double.parse is used for change datatype from string to double.
-                //Textbox text have string and ConvertedValue as double datatype
                 ConvertedValue = double.Parse(txtCurrency.Text);
-                //Show the label converted currency and converted currency name.
-                //Tostring("N3") is used to place 000 after the dot(.)
                 lblCurrency.Content = cmbToCurrency.Text + " " + ConvertedValue.ToString("N2");
             }
             else
             {
-                //Calculation for currency converter is From currency value multiplied(*) with the amount textbox value and then the total is divided(/) with To currency value.
                 ConvertedValue = (double.Parse(cmbFromCurrency.SelectedValue.ToString()) * double.Parse(txtCurrency.Text)) / double.Parse(cmbToCurrency.SelectedValue.ToString());
-
-                //Show the label converted currency and converted currency name.
                 lblCurrency.Content = cmbToCurrency.Text + " " + ConvertedValue.ToString("N2");
             }
         }
@@ -147,27 +133,20 @@ namespace CurrencyConvertor_Static
         {
             try
             {
-                //Clear amount textbox text
                 txtCurrency.Text = string.Empty;
 
-                //From currency combobox items count greater than 0
                 if (cmbFromCurrency.Items.Count > 0)
                 {
-                    //Set from currency combobox selected item hint
                     cmbFromCurrency.SelectedIndex = 0;
                 }
 
-                //To currency combobox items count greater than 0
                 if (cmbToCurrency.Items.Count > 0)
                 {
-                    //Set to currency combobox selected item hint
                     cmbToCurrency.SelectedIndex = 0;
                 }
 
-                //Clear a label text
                 lblCurrency.Content = "";
 
-                //Set focus on amount textbox
                 txtCurrency.Focus();
             }
             catch (Exception ex)
