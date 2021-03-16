@@ -61,10 +61,8 @@ namespace CurrencyConvertor_Static
 
         private void Convert_Click(object sender, RoutedEventArgs e)
         {
-            //Declare ConvertedValue with double data type for store currency converted value
             double ConvertedValue;
 
-            //Check amount textbox is Null or Blank
             if (txtCurrency.Text == null || txtCurrency.Text.Trim() == "")
             {
                 MessageBox.Show("Please Enter Currency", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
